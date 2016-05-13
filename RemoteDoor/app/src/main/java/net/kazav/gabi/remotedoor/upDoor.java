@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 import android.widget.RemoteViews;
+import android.widget.Toast;
 
 import java.util.HashMap;
 
@@ -67,7 +68,7 @@ public class upDoor extends AppWidgetProvider {
             HashMap map = prefs.get_widget(context, Integer.parseInt(doorid));
             Log.w("doorID", doorid);
             String[] door = {map.get("name").toString(), map.get("secret").toString()};
-            new HttpRequestTask().execute(door);
+            new HttpRequestTask(context).execute(door);
         }
     }
 }
