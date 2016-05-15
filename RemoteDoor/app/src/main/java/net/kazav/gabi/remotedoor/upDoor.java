@@ -22,19 +22,21 @@ public class upDoor extends AppWidgetProvider {
                                 int appWidgetId) {
 
         HashMap map = prefs.get_widget(context, appWidgetId);
-        CharSequence widgetText = map.get("caption").toString();
-        // Construct the RemoteViews object
-        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.up_door_widget);
-        views.setTextViewText(R.id.textView, widgetText);
+        if (map.containsKey("caption")) {
+            CharSequence widgetText = map.get("caption").toString();
+            // Construct the RemoteViews object
+            RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.up_door_widget);
+            views.setTextViewText(R.id.textView, widgetText);
 
-        Intent intent = new Intent(context, upDoor.class);
-        intent.setAction(CLICK_DOOR);
-        intent.putExtra(DOOR_ID, Integer.toString(appWidgetId));
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        views.setOnClickPendingIntent(R.id.houseIcon, pendingIntent);
+            Intent intent = new Intent(context, upDoor.class);
+            intent.setAction(CLICK_DOOR);
+            intent.putExtra(DOOR_ID, Integer.toString(appWidgetId));
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            views.setOnClickPendingIntent(R.id.houseIcon, pendingIntent);
 
-        // Instruct the widget manager to update the widget
-        appWidgetManager.updateAppWidget(appWidgetId, views);
+            // Instruct the widget manager to update the widget
+            appWidgetManager.updateAppWidget(appWidgetId, views);
+        }
     }
 
     @Override

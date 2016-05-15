@@ -5,6 +5,6 @@
     android:minHeight="40dp"
     android:minWidth="40dp"
     android:configure="net.kazav.gabi.remotedoor.DoorConf"
-    android:previewImage="@drawable/house"
+    android:previewImage="@drawable/housek"
     android:updatePeriodMillis="0"
     android:widgetCategory="home_screen" />

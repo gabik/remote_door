@@ -30,9 +30,11 @@ public class prefs extends PreferenceActivity{
         SharedPreferences sp = c.getSharedPreferences(FILEN, MODE_PRIVATE);
         HashMap<String, String> map = new HashMap<>();
         String[] door = sp.getString(Integer.toString(doorid), "&&").split("&");
-        map.put("caption", door[0]);
-        map.put("name", door[1]);
-        map.put("secret", door[2]);
+        if (door.length == 3){
+            map.put("caption", door[0]);
+            map.put("name", door[1]);
+            map.put("secret", door[2]);
+        }
         return map;
     }
 }

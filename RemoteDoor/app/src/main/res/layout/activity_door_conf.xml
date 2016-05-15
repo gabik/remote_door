@@ -28,6 +28,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:hint="Secret"
+        android:inputType="textPassword"
         android:textStyle="bold"/>
 
     <Button
