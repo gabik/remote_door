@@ -5,9 +5,18 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.RemoteViews;
-import android.widget.Toast;
+
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Result;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
+import com.google.android.gms.wearable.Wearable;
 
 import java.util.HashMap;
 
@@ -36,6 +45,31 @@ public class upDoor extends AppWidgetProvider {
 
             // Instruct the widget manager to update the widget
             appWidgetManager.updateAppWidget(appWidgetId, views);
+
+            // Sending data to wear
+            GoogleApiClient mGoogleApiClient = new GoogleApiClient.Builder(context)
+                    .addApi(Wearable.API)
+                    .build();
+            mGoogleApiClient.connect();
+            Log.w("Google API", "Connecting");
+            PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/doors/" + Integer.toString(appWidgetId));
+            putDataMapReq.getDataMap().putString("caption", map.get("caption").toString());
+            putDataMapReq.getDataMap().putString("name", map.get("name").toString());
+            putDataMapReq.getDataMap().putString("secret", map.get("secret").toString());
+            putDataMapReq.setUrgent();
+            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+            com.google.android.gms.common.api.ResultCallback send_callback =
+                    new ResultCallback() {
+                        @Override
+                        public void onResult(@NonNull Result result) {
+                            if (!result.getStatus().isSuccess()) {
+                                Log.w("Result", "Failed");
+                            }else{
+                                Log.w("Result", "Success");
+                            }
+                        }
+                    };
+            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq).setResultCallback(send_callback);
         }
     }
 
