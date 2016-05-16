@@ -14,6 +14,7 @@ import java.util.HashMap;
 
 /**
  * Created by gabi on 12/05/2016.
+ * General shared preferences
  */
 public class prefs extends PreferenceActivity{
     final static String FILEN = "DoOrSpReFs";
@@ -23,7 +24,7 @@ public class prefs extends PreferenceActivity{
         SharedPreferences.Editor edit = sp.edit();
         String val = caption + "&" + doorname + "&" + secret;
         edit.putString(Integer.toString(doorid), val);
-        edit.commit();
+        edit.apply();
     }
 
     public static HashMap<String, String> get_widget(Context c, int doorid){

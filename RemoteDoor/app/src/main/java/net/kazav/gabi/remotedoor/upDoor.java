@@ -46,31 +46,37 @@ public class upDoor extends AppWidgetProvider {
             // Instruct the widget manager to update the widget
             appWidgetManager.updateAppWidget(appWidgetId, views);
 
-            // Sending data to wear
-            GoogleApiClient mGoogleApiClient = new GoogleApiClient.Builder(context)
-                    .addApi(Wearable.API)
-                    .build();
-            mGoogleApiClient.connect();
-            Log.w("Google API", "Connecting");
-            PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/doors/" + Integer.toString(appWidgetId));
-            putDataMapReq.getDataMap().putString("caption", map.get("caption").toString());
-            putDataMapReq.getDataMap().putString("name", map.get("name").toString());
-            putDataMapReq.getDataMap().putString("secret", map.get("secret").toString());
-            putDataMapReq.setUrgent();
-            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-            com.google.android.gms.common.api.ResultCallback send_callback =
-                    new ResultCallback() {
-                        @Override
-                        public void onResult(@NonNull Result result) {
-                            if (!result.getStatus().isSuccess()) {
-                                Log.w("Result", "Failed");
-                            }else{
-                                Log.w("Result", "Success");
-                            }
-                        }
-                    };
-            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq).setResultCallback(send_callback);
+            send_to_wear(context, map, appWidgetId);
         }
+    }
+
+    private static void send_to_wear(Context context, HashMap map, int appWidgetId) {
+        // Sending data to wear
+        GoogleApiClient mGoogleApiClient = new GoogleApiClient.Builder(context)
+                .addApi(Wearable.API)
+                .build();
+        mGoogleApiClient.connect();
+        Log.w("Google API", "Connecting");
+        PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/doors/" + Integer.toString(appWidgetId));
+        putDataMapReq.getDataMap().putString("caption", map.get("caption").toString());
+        putDataMapReq.getDataMap().putString("name", map.get("name").toString());
+        putDataMapReq.getDataMap().putString("secret", map.get("secret").toString());
+        putDataMapReq.setUrgent();
+        PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+        com.google.android.gms.common.api.ResultCallback send_callback =
+                new ResultCallback() {
+                    @Override
+                    public void onResult(@NonNull Result result) {
+                        if (!result.getStatus().isSuccess()) {
+                            Log.w("Result", "Failed");
+                        }else{
+                            Log.w("Result", "Success");
+                        }
+                        Log.w("Reason", result.getStatus().getStatusMessage());
+                    }
+                };
+        com.google.android.gms.common.api.PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        pendingResult.setResultCallback(send_callback);
     }
 
     @Override
@@ -105,6 +111,7 @@ public class upDoor extends AppWidgetProvider {
             Log.w("doorID", doorid);
             String[] door = {map.get("name").toString(), map.get("secret").toString()};
             new HttpRequestTask(context).execute(door);
+            send_to_wear(context, map, Integer.parseInt(doorid));
         }
     }
 }

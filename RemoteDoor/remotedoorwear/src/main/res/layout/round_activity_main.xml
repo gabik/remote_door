@@ -6,5 +6,9 @@
     tools:context="net.kazav.gabi.remotedoorwear.main"
     tools:deviceIds="wear_round">
 
-    <include layout="@layout/up_door_widget" />
+    <android.support.wearable.view.WearableListView
+        android:id="@+id/doors_list"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        />
 </RelativeLayout>
