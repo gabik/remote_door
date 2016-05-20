@@ -1,4 +1,4 @@
-package net.kazav.gabi.remotedoor;
+package remotedoors.gabi.kazav.net.remotedoors;
 
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
@@ -19,19 +19,28 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of App Widget functionality.
  */
-public class upDoor extends AppWidgetProvider {
-    public static String TAG = "Remote door GAPI";
+public class upDoor extends AppWidgetProvider implements ResultCallback<DataApi.DataItemResult> {
     public static String CLICK_DOOR = "ClickDoorOpen";
     public static String DOOR_ID = "DoorID";
-    private static GoogleApiClient mGoogleApiClient;
+    private GoogleApiClient mGoogleApiClient;
 
-    static void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
+    @Override
+    public void onResult(@NonNull DataApi.DataItemResult result) {
+        Log.w(prefs.TAG, "Result: " + result.getStatus().toString());
+        Log.w(prefs.TAG, "Reason: " + result.getStatus().getStatusMessage());
+        Log.w(prefs.TAG, "Item: " + result.getDataItem().getUri().toString());
+        DataMap dataMap = DataMap.fromByteArray(result.getDataItem().getData());
+        Log.w(prefs.TAG, "Map: " + dataMap.toString());
+
+    }
+
+    void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
         HashMap map = prefs.get_widget(context, appWidgetId);
         if (map.containsKey("caption")) {
             CharSequence widgetText = map.get("caption").toString();
@@ -48,68 +57,77 @@ public class upDoor extends AppWidgetProvider {
             // Instruct the widget manager to update the widget
             appWidgetManager.updateAppWidget(appWidgetId, views);
 
-            connect_to_data(context, map, appWidgetId);
+            connect_to_data(context);
         }
     }
 
-    private static void connect_to_data(final Context context, final HashMap map, final int appWidgetId) {
+    public void connect_to_data(final Context context) {
         mGoogleApiClient = new GoogleApiClient.Builder(context)
                 .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                     @Override
                     public void onConnected(Bundle connectionHint) {
-                        Log.w("Google API", Boolean.toString(mGoogleApiClient.isConnected()));
-                        Log.d(TAG, "onConnected: " + connectionHint);
-                        send_to_wear(map, appWidgetId);
+                        Log.w(prefs.TAG, "Google API con stat: " +Boolean.toString(mGoogleApiClient.isConnected()));
+                        Log.w(prefs.TAG, "onConnected connectionHint: " + connectionHint);
+                        send_to_wear(context);
                     }
 
                     @Override
                     public void onConnectionSuspended(int cause) {
-                        Log.d(TAG, "onConnectionSuspended: " + cause);
+                        Log.w(prefs.TAG, "onConnectionSuspended: " + cause);
                     }
                 })
                 .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
                     @Override
                     public void onConnectionFailed(ConnectionResult result) {
-                        Log.d(TAG, "onConnectionFailed: " + result);
+                        Log.w(prefs.TAG, "onConnectionFailed: " + result);
                     }
                 })
                 .addApi(Wearable.API)
                 .build();
-        Log.w("Google API", "Connecting");
+        Log.w(prefs.TAG, "Google API Connecting");
         mGoogleApiClient.connect();
     }
 
-    private static void send_to_wear(HashMap map, int appWidgetId) {
-        com.google.android.gms.common.api.ResultCallback<DataApi.DataItemResult> send_callback =
-                new ResultCallback<DataApi.DataItemResult>() {
-                    @Override
-                    public void onResult(@NonNull DataApi.DataItemResult result) {
-                        Log.w("Result", result.getStatus().toString());
-                        Log.w("Reason", result.getStatus().getStatusMessage());
-                        Log.w("Item", result.getDataItem().getUri().toString());
-                        DataMap dataMap = DataMap.fromByteArray(result.getDataItem().getData());
-                        Log.w("map", dataMap.toString());
+//    private void sendMessage( final String path, final String text ) {
+//        new Thread( new Runnable() {
+//            @Override
+//            public void run() {
+//                NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
+//                for(Node node : nodes.getNodes()) {
+//                    MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(mGoogleApiClient, node.getId(), path, text.getBytes() ).await();
+//                    Log.w(prefs.TAG, "Node: " + node.getDisplayName());
+//                    Log.w(prefs.TAG, "MSG: " + result.getStatus().toString());
+//                }
+//            }
+//        }).start();
+//    }
 
-                    }
-                };
-        PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/doors/" + Integer.toString(appWidgetId));
-        putDataMapReq.getDataMap().putString("caption", map.get("caption").toString());
-        putDataMapReq.getDataMap().putString("name", map.get("name").toString());
-        putDataMapReq.getDataMap().putString("secret", map.get("secret").toString());
-        putDataMapReq.getDataMap().putLong("Time", System.currentTimeMillis());
+    private void send_to_wear(Context context) {
+        ArrayList<DataMap> all_doors = new ArrayList<>();
+        for (Integer i : prefs.get_doors(context)) {
+            HashMap dm = prefs.get_widget(context, i);
+            DataMap cur_door = new DataMap();
+            cur_door.putInt("doorid", i);
+            cur_door.putString("caption", dm.get("caption").toString());
+            cur_door.putString("name", dm.get("name").toString());
+            cur_door.putString("secret", dm.get("secret").toString());
+            cur_door.putLong("time", System.currentTimeMillis());
+            all_doors.add(cur_door);
+        }
+        PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/doors");
+        putDataMapReq.getDataMap().putDataMapArrayList("ALL", all_doors);
         putDataMapReq.setUrgent();
         PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
         com.google.android.gms.common.api.PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
-        pendingResult.setResultCallback(send_callback);
+        pendingResult.setResultCallback(this);
     }
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        //super.onUpdate(context, appWidgetManager, appWidgetIds);
         // There may be multiple widgets active, so update all of them
-        Log.w("Updating doors", "OK");
+        Log.w(prefs.TAG, "Updating doors - loop");
         for (int appWidgetId : appWidgetIds) {
-            Log.w("Door Widget ID", Integer.toString(appWidgetId));
+            Log.w(prefs.TAG, "Door Widget ID:" + Integer.toString(appWidgetId));
             updateAppWidget(context, appWidgetManager, appWidgetId);
         }
     }
@@ -117,12 +135,21 @@ public class upDoor extends AppWidgetProvider {
     @Override
     public void onEnabled(Context context) {
         // Enter relevant functionality for when the first widget is created
-        Log.w("Enabled", "Door");
+        Log.w(prefs.TAG, "onEnabled");
     }
 
     @Override
     public void onDisabled(Context context) {
-        // Enter relevant functionality for when the last widget is disabled
+        prefs.clear_all(context);
+        connect_to_data(context);
+    }
+
+    @Override
+    public void onDeleted(Context context, int[] WID) {
+        for (int i : WID) {
+            prefs.del_door(context, i);
+        }
+        connect_to_data(context);
     }
 
     @Override
@@ -132,10 +159,11 @@ public class upDoor extends AppWidgetProvider {
         if (intent.getAction().equals(CLICK_DOOR)) {
             String doorid = intent.getStringExtra(DOOR_ID);
             HashMap map = prefs.get_widget(context, Integer.parseInt(doorid));
-            Log.w("doorID", doorid);
+            Log.w(prefs.TAG, "onReceive, doorID: " + doorid);
             String[] door = {map.get("name").toString(), map.get("secret").toString()};
             new HttpRequestTask(context).execute(door);
-            connect_to_data(context, map, Integer.parseInt(doorid));
+            connect_to_data(context);
         }
     }
+
 }

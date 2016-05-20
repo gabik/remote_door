@@ -1,4 +1,4 @@
-package net.kazav.gabi.remotedoorwear;
+package net.kazav.gabi.remotedoor;
 
 import android.content.Context;
 import android.support.wearable.view.WearableListView;

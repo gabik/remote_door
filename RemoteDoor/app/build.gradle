@@ -21,7 +21,10 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    wearApp project(':remotedoorwear')
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:design:23.4.0'
     compile 'com.google.android.gms:play-services-wearable:8.4.0'
+    compile 'com.google.android.support:wearable:1.4.0'
+
 }

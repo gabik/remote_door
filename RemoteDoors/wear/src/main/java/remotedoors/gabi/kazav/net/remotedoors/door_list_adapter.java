@@ -1,4 +1,4 @@
-package net.kazav.gabi.remotedoorwear;
+package remotedoors.gabi.kazav.net.remotedoors;
 
 import android.content.Context;
 import android.support.wearable.view.WearableListView;
@@ -10,6 +10,8 @@ import android.widget.TextView;
 
 import com.google.android.gms.wearable.DataMap;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -20,24 +22,32 @@ public class door_list_adapter extends WearableListView.Adapter  {
 
     private final Context mContext;
     private final LayoutInflater mInflater;
-    private DataMap[] mDataset;
+    private DataMap[] mDoorMap;
+
+    public DataMap get_by_pos(int pos) { return mDoorMap[pos]; }
 
     public static class ItemViewHolder extends WearableListView.ViewHolder {
         private TextView textView;
+        private String doorid;
         public ItemViewHolder(View itemView) {
             super(itemView);
             textView = (TextView) itemView.findViewById(R.id.door_name);
+        }
+        public void setId(String doorid) {
+            this.doorid = doorid;
         }
     }
 
     public door_list_adapter(Context context, List<Integer> datasetkeys) {
         mContext = context;
         mInflater = LayoutInflater.from(context);
-        mDataset = new DataMap[datasetkeys.size()];
+        mDoorMap = new DataMap[datasetkeys.size()];
         int c = 0;
-        Log.w("Dataset size", Integer.toString(datasetkeys.size()));
+        Log.w(dataLayer.TAG, "Dataset size: " + Integer.toString(datasetkeys.size()));
         for (Integer i : datasetkeys) {
-            mDataset[c++] = prefs.get_door(context, i);
+            DataMap dm = prefs.get_door(context, i);
+            dm.putString("doorid", Integer.toString(i));
+            mDoorMap[c++] = dm;
         }
     }
 
@@ -47,15 +57,15 @@ public class door_list_adapter extends WearableListView.Adapter  {
     }
 
     @Override
-    public void onBindViewHolder(WearableListView.ViewHolder holder, int position) {
+    public void onBindViewHolder(final WearableListView.ViewHolder holder, final int position) {
         ItemViewHolder itemHolder = (ItemViewHolder) holder;
         TextView view = itemHolder.textView;
-        view.setText(mDataset[position].getString("caption"));
+        view.setText(mDoorMap[position].getString("caption"));
         holder.itemView.setTag(position);
     }
 
     @Override
     public int getItemCount() {
-        return mDataset.length;
+        return mDoorMap.length;
     }
 }

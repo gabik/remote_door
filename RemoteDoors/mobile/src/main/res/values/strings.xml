@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">RemoteDoors</string>
+    <string name="title_activity_door_conf">DoorConf</string>
+    <!--<string name="google_app_id">718454975637</string>-->
+</resources>

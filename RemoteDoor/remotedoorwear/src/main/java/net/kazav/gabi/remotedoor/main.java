@@ -1,4 +1,4 @@
-package net.kazav.gabi.remotedoorwear;
+package net.kazav.gabi.remotedoor;
 
 import android.app.Activity;
 import android.content.Context;
@@ -25,15 +25,15 @@ public class main extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.round_activity_main);
-        dl = new dataLayer(this);
+//        dl = new dataLayer(this);
         WearableListView listView = (WearableListView) findViewById(R.id.doors_list);
         Log.w("Starting", "Adapter");
         listView.setAdapter(new door_list_adapter(this, prefs.get_doors(this)));
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        dl.connect();
-    }
+//    @Override
+//    protected void onResume() {
+//        super.onResume();
+//        dl.connect();
+//    }
 }
