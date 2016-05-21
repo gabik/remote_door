@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "718454975637",
+    "project_id": "remote-doors"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:718454975637:android:ed4d6213fb625e95",
+        "android_client_info": {
+          "package_name": "remotedoors.gabi.kazav.net.remotedoors"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "718454975637-goob0rsierq1hju2b4rlr46klr5i61l1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "remotedoors.gabi.kazav.net.remotedoors",
+            "certificate_hash": "BED7C180B24F8F217E912BDC6FA71991ECA5A595"
+          }
+        },
+        {
+          "client_id": "718454975637-k1f86fepptu53rjbjm7kr4h5uu6uhs60.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6tjVRsvXweUSq11wFg6_SlF52VV0XShc"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

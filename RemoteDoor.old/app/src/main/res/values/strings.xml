@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Remote Door</string>
+    <string name="title_activity_door_conf">DoorConf</string>
+</resources>
