@@ -14,8 +14,13 @@ import java.net.URL;
 
 public class HttpRequestTask extends AsyncTask<String, Void, String> {
     Context c;
+    boolean is_watch = false;
 
-    public HttpRequestTask(Context cont) {c=cont;}
+    public HttpRequestTask(Context cont, boolean is_from_watch) {
+        c=cont;
+        is_watch = is_from_watch;
+    }
+
     protected String doInBackground(String... doorId) {
         String name = doorId[0];
         String secret  = doorId[1];
@@ -51,12 +56,15 @@ public class HttpRequestTask extends AsyncTask<String, Void, String> {
         if (retxt.equals("YES")) {
             long[] ptrn = {0, 50,100,60,100,80};
             v.vibrate(ptrn, -1);
+            if (is_watch) { upDoor.ack_ok = true; upDoor.connect_to_data(c, true); }
         } else if (retxt.equals("NO")) {
             Log.w(prefs.TAG, "Door cannot be found: " + retxt);
             Toast.makeText(c.getApplicationContext(), "הדלת אינה מחוברת", Toast.LENGTH_LONG).show();
             v.vibrate(1000);
+            if (is_watch) { upDoor.ack_ok = false; upDoor.connect_to_data(c, true); }
         } else {
             v.vibrate(1000);
+            if (is_watch) { upDoor.ack_ok = false; upDoor.connect_to_data(c, true); }
         }
     }
 }

@@ -2,10 +2,9 @@ package remotedoors.gabi.kazav.net.remotedoors;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.os.SystemClock;
+import android.support.wearable.view.WatchViewStub;
 import android.support.wearable.view.WearableListView;
 import android.util.Log;
-import android.view.View;
 
 import com.google.android.gms.wearable.DataMap;
 
@@ -17,11 +16,19 @@ public class main extends Activity implements WearableListView.ClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.round_activity_main);
-        WearableListView listView = (WearableListView) findViewById(R.id.doors_list);
-        Log.w(dataLayer.TAG, "Starting Adapter");
-        dla = new door_list_adapter(this, prefs.get_doors(this));
-        listView.setAdapter(dla);
-        listView.setClickListener(this);
+
+        setContentView(R.layout.activity_main);
+        final WatchViewStub stub = (WatchViewStub) findViewById(R.id.watch_view_stub);
+        stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
+            @Override
+            public void onLayoutInflated(WatchViewStub stub) {
+                WearableListView listView = (WearableListView) stub.findViewById(R.id.doors_list);
+                Log.w(dataLayer.TAG, "Starting Adapter");
+                dla = new door_list_adapter(stub.getContext(), prefs.get_doors(stub.getContext()));
+                listView.setAdapter(dla);
+                listView.setClickListener(main.this);
+            }
+        });
     }
 
     @Override
@@ -34,14 +41,13 @@ public class main extends Activity implements WearableListView.ClickListener {
                 + " secret: " + dm.getString("secret")
                 + " ID: " + dm.getString("doorid")
         );
-        String[] door = {dm.getString("name"), dm.getString("secret")};
-        new HttpRequestTask(this).execute(door);
+//        String[] door = {dm.getString("name"), dm.getString("secret")};
+//        new HttpRequestTask(this).execute(door);
+        dataLayer.sendMessage(this, dm.getString("doorid"));
         dm.putLong("time", System.currentTimeMillis());
         prefs.save_door(this, Integer.parseInt(dm.getString("doorid")), dm);
     }
 
     @Override
-    public void onTopEmptyRegionClick() {
-
-    }
+    public void onTopEmptyRegionClick() {}
 }

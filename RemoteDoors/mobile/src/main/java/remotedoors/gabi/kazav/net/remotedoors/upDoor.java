@@ -15,6 +15,9 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
@@ -25,20 +28,13 @@ import java.util.HashMap;
 /**
  * Implementation of App Widget functionality.
  */
-public class upDoor extends AppWidgetProvider implements ResultCallback<DataApi.DataItemResult> {
+public  class upDoor extends AppWidgetProvider { // implements ResultCallback<DataApi.DataItemResult> {
     public static String CLICK_DOOR = "ClickDoorOpen";
     public static String DOOR_ID = "DoorID";
-    private GoogleApiClient mGoogleApiClient;
+    public static boolean ack_ok = false;
+    private static String ACK_PATH = "/acks";
 
-    @Override
-    public void onResult(@NonNull DataApi.DataItemResult result) {
-        Log.w(prefs.TAG, "Result: " + result.getStatus().toString());
-        Log.w(prefs.TAG, "Reason: " + result.getStatus().getStatusMessage());
-        Log.w(prefs.TAG, "Item: " + result.getDataItem().getUri().toString());
-        DataMap dataMap = DataMap.fromByteArray(result.getDataItem().getData());
-        Log.w(prefs.TAG, "Map: " + dataMap.toString());
-
-    }
+    private static GoogleApiClient mGoogleApiClient;
 
     void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
         HashMap map = prefs.get_widget(context, appWidgetId);
@@ -57,18 +53,22 @@ public class upDoor extends AppWidgetProvider implements ResultCallback<DataApi.
             // Instruct the widget manager to update the widget
             appWidgetManager.updateAppWidget(appWidgetId, views);
 
-            connect_to_data(context);
+            connect_to_data(context, false);
         }
     }
 
-    public void connect_to_data(final Context context) {
+    public static void connect_to_data(final Context context, final boolean is_ack) {
         mGoogleApiClient = new GoogleApiClient.Builder(context)
                 .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                     @Override
                     public void onConnected(Bundle connectionHint) {
                         Log.w(prefs.TAG, "Google API con stat: " +Boolean.toString(mGoogleApiClient.isConnected()));
                         Log.w(prefs.TAG, "onConnected connectionHint: " + connectionHint);
-                        send_to_wear(context);
+                        if (is_ack) {
+                            send_back_stats();
+                        } else {
+                            send_to_wear(context);
+                        }
                     }
 
                     @Override
@@ -88,21 +88,21 @@ public class upDoor extends AppWidgetProvider implements ResultCallback<DataApi.
         mGoogleApiClient.connect();
     }
 
-//    private void sendMessage( final String path, final String text ) {
-//        new Thread( new Runnable() {
-//            @Override
-//            public void run() {
-//                NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
-//                for(Node node : nodes.getNodes()) {
-//                    MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(mGoogleApiClient, node.getId(), path, text.getBytes() ).await();
-//                    Log.w(prefs.TAG, "Node: " + node.getDisplayName());
-//                    Log.w(prefs.TAG, "MSG: " + result.getStatus().toString());
-//                }
-//            }
-//        }).start();
-//    }
+    private static void send_back_stats() {
+        new Thread( new Runnable() {
+            @Override
+            public void run() {
+                NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
+                for(Node node : nodes.getNodes()) {
+                    MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(mGoogleApiClient, node.getId(), ACK_PATH, Boolean.toString(ack_ok).getBytes()).await();
+                    Log.w(prefs.TAG, "Node: " + node.getDisplayName());
+                    Log.w(prefs.TAG, "MSG: " + result.getStatus().toString());
+                }
+            }
+        }).start();
+    }
 
-    private void send_to_wear(Context context) {
+    private static void send_to_wear(final Context context) {
         ArrayList<DataMap> all_doors = new ArrayList<>();
         for (Integer i : prefs.get_doors(context)) {
             HashMap dm = prefs.get_widget(context, i);
@@ -119,7 +119,17 @@ public class upDoor extends AppWidgetProvider implements ResultCallback<DataApi.
         putDataMapReq.setUrgent();
         PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
         com.google.android.gms.common.api.PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
-        pendingResult.setResultCallback(this);
+        pendingResult.setResultCallback(new  ResultCallback<DataApi.DataItemResult> () {
+            @Override
+            public void onResult(@NonNull DataApi.DataItemResult result) {
+                Log.w(prefs.TAG, "Result: " + result.getStatus().toString());
+                Log.w(prefs.TAG, "Reason: " + result.getStatus().getStatusMessage());
+                Log.w(prefs.TAG, "Item: " + result.getDataItem().getUri().toString());
+                DataMap dataMap = DataMap.fromByteArray(result.getDataItem().getData());
+                Log.w(prefs.TAG, "Map: " + dataMap.toString());
+
+            }
+        });
     }
 
     @Override
@@ -141,7 +151,7 @@ public class upDoor extends AppWidgetProvider implements ResultCallback<DataApi.
     @Override
     public void onDisabled(Context context) {
         prefs.clear_all(context);
-        connect_to_data(context);
+        connect_to_data(context, false);
     }
 
     @Override
@@ -149,7 +159,7 @@ public class upDoor extends AppWidgetProvider implements ResultCallback<DataApi.
         for (int i : WID) {
             prefs.del_door(context, i);
         }
-        connect_to_data(context);
+        connect_to_data(context, false);
     }
 
     @Override
@@ -161,8 +171,8 @@ public class upDoor extends AppWidgetProvider implements ResultCallback<DataApi.
             HashMap map = prefs.get_widget(context, Integer.parseInt(doorid));
             Log.w(prefs.TAG, "onReceive, doorID: " + doorid);
             String[] door = {map.get("name").toString(), map.get("secret").toString()};
-            new HttpRequestTask(context).execute(door);
-            connect_to_data(context);
+            new HttpRequestTask(context, false).execute(door);
+            connect_to_data(context, false);
         }
     }
 
