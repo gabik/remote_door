@@ -51,11 +51,9 @@ public class HttpRequestTask extends AsyncTask<String, Void, String> {
         if (retxt.equals("YES")) {
             long[] ptrn = {0, 50,100,60,100,80};
             v.vibrate(ptrn, -1);
-        } else if (retxt.equals("NO")) {
+        } else {
             Log.w(dataLayer.TAG, "Door cannot be found: " + retxt);
             Toast.makeText(c.getApplicationContext(), "הדלת אינה מחוברת", Toast.LENGTH_LONG).show();
-            v.vibrate(1000);
-        } else {
             v.vibrate(1000);
         }
     }

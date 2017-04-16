@@ -8,6 +8,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
@@ -54,6 +55,7 @@ public class AnalogFace extends CanvasWatchFaceService {
         Paint mMinutePaint;
         Paint mSecondPaint;
         Paint mYlw;
+        Paint txtP;
         Bitmap mTick;
 
         final Handler mUpdateTimeHandler = new Handler() {
@@ -113,6 +115,11 @@ public class AnalogFace extends CanvasWatchFaceService {
             mYlw.setStrokeWidth(5.0f);
             mYlw.setAntiAlias(true);
             mYlw.setStrokeCap(Paint.Cap.SQUARE);
+            txtP = new Paint();
+            txtP.setColor(Color.BLUE);
+            txtP.setStyle(Paint.Style.FILL);
+            txtP.setTextSize(20);
+
 
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inMutable = true;
@@ -172,11 +179,9 @@ public class AnalogFace extends CanvasWatchFaceService {
             int width = bounds.width();
             int height = bounds.height();
 
+
             canvas.drawBitmap(mBackgroundScaledBitmap, 0, 0, null);
 
-            // Find the center. Ignore the window insets so that, on round watches
-            // with a "chin", the watch face is centered on the entire screen, not
-            // just the usable portion.
             float centerX = width / 2f;
             float centerY = height / 2f;
 
@@ -192,16 +197,25 @@ public class AnalogFace extends CanvasWatchFaceService {
             float minLength = centerX - 60;
             float hrLength = centerX - 100;
 
-
-
-            // Draw the minute and hour hands.
             float minX = (float) Math.sin(minRot) * minLength;
             float minY = (float) -Math.cos(minRot) * minLength;
-            canvas.drawLine(centerX, centerY, centerX + minX, centerY + minY, mMinutePaint);
             float hrX = (float) Math.sin(hrRot) * hrLength;
             float hrY = (float) -Math.cos(hrRot) * hrLength;
-            canvas.drawLine(centerX, centerY, centerX + hrX, centerY + hrY, mHourPaint);
 
+            if (!isInAmbientMode()) {
+                float secX = (float) Math.sin(secRot) * secLength;
+                float secY = (float) -Math.cos(secRot) * secLength;
+                canvas.drawLine(centerX, centerY, centerX + minX, centerY + minY, mMinutePaint);
+                canvas.drawLine(centerX, centerY, centerX + hrX, centerY + hrY, mHourPaint);
+                canvas.drawLine(centerX, centerY, centerX + secX, centerY + secY, mSecondPaint);
+                canvas.drawLine(centerX + secX * 0.75f,
+                        centerY + secY * 0.75f,
+                        centerX + secX * 0.9f,
+                        centerY + secY * 0.9f,
+                        mYlw);
+                int day = mCalendar.get(Calendar.DAY_OF_MONTH);
+                canvas.drawText(Integer.toString(day), width-20, centerY, txtP);
+            }
             canvas.drawLine(centerX + minX * 0.75f,
                     centerY + minY * 0.75f,
                     centerX + minX * 0.9f,
@@ -212,17 +226,7 @@ public class AnalogFace extends CanvasWatchFaceService {
                     centerX + hrX * 0.9f,
                     centerY + hrY * 0.9f,
                     mYlw);
-            // Only draw the second hand in interactive mode.
-            if (!isInAmbientMode()) {
-                float secX = (float) Math.sin(secRot) * secLength;
-                float secY = (float) -Math.cos(secRot) * secLength;
-                canvas.drawLine(centerX, centerY, centerX + secX, centerY + secY, mSecondPaint);
-                canvas.drawLine(centerX + secX * 0.75f,
-                        centerY + secY * 0.75f,
-                        centerX + secX * 0.9f,
-                        centerY + secY * 0.9f,
-                        mYlw);
-            }
+            canvas.drawText("Rolex", centerX/2f, 20, txtP);
 
         }
 
